@@ -1,3 +1,37 @@
+# Release notes — lwip-amiga 1.7
+
+Changes since v1.6.
+
+A compatibility release. Nothing to change in your configuration.
+
+---
+
+## Bug fixes / Improvements
+
+- **Older network programs can read the interface address again.**
+  Programs written for AmiTCP ask for the interface list and addresses
+  with the classic `SIOCGIFCONF` / `SIOCGIFFLAGS` / `SIOCGIFADDR` requests.
+  These got an error, so for example `GetIPAddress` printed "N/A", and
+  scripts that test the network with it thought it was down. The stack now
+  answers them, with the same names and addresses `netinfo` shows.
+
+---
+
+## For developers
+
+- `IoctlSocket()` answers the read-only interface requests `SIOCGIFCONF`,
+  `SIOCGIFFLAGS`, `SIOCGIFADDR`, `SIOCGIFDSTADDR`, `SIOCGIFBRDADDR`,
+  `SIOCGIFNETMASK`, `SIOCGIFMETRIC` and the 4.3BSD `OSIOCGIF*` forms
+  (`osockaddr`), with the netinclude numbering and structs. Interface
+  names are the `ObtainInterfaceList` ones, so a name from `SIOCGIFCONF`
+  can be passed back. Unknown names give `ENXIO`, `SIOCGIFBRDADDR` on a
+  non-broadcast interface `EINVAL`; the `SIOCSIF*` set requests stay
+  `EINVAL` (interfaces are configured with `AddNetInterface`).
+- The new code is marked `cold`: without it, the LTO build re-partitioned
+  the hot TX/RX code and TCP send throughput dropped by 6-12 % on a 68080.
+
+---
+
 # Release notes — lwip-amiga 1.6
 
 Changes since v1.5.
