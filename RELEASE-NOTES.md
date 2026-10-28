@@ -14,6 +14,14 @@ A compatibility release. Nothing to change in your configuration.
   These got an error, so for example `GetIPAddress` printed "N/A", and
   scripts that test the network with it thought it was down. The stack now
   answers them, with the same names and addresses `netinfo` shows.
+- **The network can be shut down while older daemons are running.** A
+  program written for AmiTCP that waits for Ctrl-C in `WaitSelect()` (it
+  puts Ctrl-C in its own signal mask) was told "interrupted" with the
+  Ctrl-C still pending, instead of receiving it as one of its signals.
+  Built with libnix, such a program was then ended by its own C library
+  before it could close the network library, and `NetShutdown` waited
+  for it forever. It now gets the Ctrl-C back as a signal, as on AmiTCP,
+  and quits cleanly.
 
 ---
 
@@ -27,6 +35,10 @@ A compatibility release. Nothing to change in your configuration.
   can be passed back. Unknown names give `ENXIO`, `SIOCGIFBRDADDR` on a
   non-broadcast interface `EINVAL`; the `SIOCSIF*` set requests stay
   `EINVAL` (interfaces are configured with `AddNetInterface`).
+- `WaitSelect()`: a break bit that is also in the caller's `*signals` mask
+  is reported as a user signal (return 0 or the ready count, the bit in
+  `*signals`, consumed), as AmiTCP does. A break outside the user mask
+  still returns -1/`EINTR` with the break re-posted, per the autodoc.
 - The new code is marked `cold`: without it, the LTO build re-partitioned
   the hot TX/RX code and TCP send throughput dropped by 6-12 % on a 68080.
 
